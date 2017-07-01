@@ -84,7 +84,7 @@ if __name__=='__main__':
                       color='r')
     plt1.plot(np.arange(len(retrace_errors_mean)), retrace_errors_mean, color="r", label="Retrace($\lambda$)")
     plt1.legend(loc='best')
-    plt.savefig('plots/counterexample.pdf', bbox_inches='tight')
+    plt.savefig('plots/counterexample.png', bbox_inches='tight')
 
     print 'running gradient off-policy algo ...'
     num_episodes = 100
@@ -128,4 +128,4 @@ if __name__=='__main__':
                      color='r')
     plt1.plot(np.arange(len(retrace_errors_mean)), retrace_errors_mean, color="r", label="GRetrace($\lambda$)")
     plt1.legend(loc='best')
-    plt.savefig('plots/counterexample_gradient.pdf', bbox_inches='tight')
+    plt.savefig('plots/counterexample_gradient.png', bbox_inches='tight')
