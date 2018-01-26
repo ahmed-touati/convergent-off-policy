@@ -25,7 +25,7 @@ if __name__=='__main__':
     decay = False
     n_runs = 5
 
-    print 'estimating stationary distribution ..'
+    print('estimating stationary distribution ..')
     mu = estimate_stationary_distribution(env, behaviour_policy)
     tree_backup_operator = OffPolicyOperator(env, target_policy, behaviour_policy, mu, discount_factor=discount_factor,
                                              lambda_param=lambda_param)
@@ -45,7 +45,7 @@ if __name__=='__main__':
     errors = np.zeros((n_runs, num_episodes))
     retrace_errors = np.zeros((n_runs, num_episodes))
 
-    print 'running off-policy algo ...'
+    print('running off-policy algo ...')
     for r in range(n_runs):
         errors[r, :] = off_policy(env, value_function, target_policy, behaviour_policy, trueQ, tree_backup_operator,
                                   theta=theta.copy(), discount_factor=discount_factor, lambda_param=lambda_param,
@@ -60,7 +60,7 @@ if __name__=='__main__':
     retrace_errors_mean = np.mean(retrace_errors, axis=0)
     retrace_errors_std = np.std(retrace_errors, axis=0)
 
-    print 'save plot ...'
+    print('save plot ...')
     plt.clf()
     plt.rcParams['text.latex.preamble'] = [r"\usepackage{lmodern}"]
     params = {'text.usetex': True,
@@ -86,7 +86,7 @@ if __name__=='__main__':
     plt1.legend(loc='best')
     plt.savefig('plots/counterexample.png', bbox_inches='tight')
 
-    print 'running gradient off-policy algo ...'
+    print('running gradient off-policy algo ...')
     num_episodes = 100
     errors = np.zeros((n_runs, num_episodes))
     retrace_errors = np.zeros((n_runs, num_episodes))
@@ -106,7 +106,7 @@ if __name__=='__main__':
     retrace_errors_mean = np.mean(retrace_errors, axis=0)
     retrace_errors_std = np.std(retrace_errors, axis=0)
 
-    print 'save plot ...'
+    print('save plot ...')
     plt.clf()
     plt.rcParams['text.latex.preamble'] = [r"\usepackage{lmodern}"]
     params = {'text.usetex': True,

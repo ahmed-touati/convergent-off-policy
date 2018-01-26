@@ -6,7 +6,7 @@ from lib.envs.baird import Baird
 
 
 def td(env, policy, discount_factor=0.6, lambda_param=0.8, alpha=0.5, num_episodes=100):
-    print 'td lambda'
+    print('td lambda')
     nS = env.nS
     nA = env.nA
     _, trueV = policy_evaluation(env, policy, discount_factor=discount_factor)
@@ -61,7 +61,7 @@ def off_policy(env, value_function, target_policy, behaviour_policy, trueQ, oper
         errors.append(error)
 
         if episode % 500 == 0:
-            print "episode %d, error %f" % (episode, error)
+            print('episode %d, error %f' % (episode, error))
 
         state = env.reset()
 
@@ -147,7 +147,7 @@ def gradient_off_policy(env, value_function, target_policy, behaviour_policy, tr
         #     return error
 
         if episode % 500 == 0:
-            print "episode %d, error %f" % (episode, error)
+            print('episode %d, error %f' % (episode, error))
 
         # initialising eligibility traces
         e = np.zeros(shape=theta.shape)
@@ -241,7 +241,7 @@ def online_gradient_off_policy(env, value_function, target_policy, behaviour_pol
         #     return error
 
         if episode % 500 == 0:
-            print "episode %d, error %f" % (episode, error)
+            print('episode %d, error %f' % (episode, error))
 
         # initialising eligibility traces
         e = np.zeros(shape=theta.shape)
@@ -309,7 +309,7 @@ def online_gradient_off_policy(env, value_function, target_policy, behaviour_pol
 def extragradient_tree_backup(env, value_function, target_policy, behaviour_policy, tree_backup_operator, theta=None,
                               discount_factor=0.6, lambda_param=0.8, alpha=0.5, num_episodes=100, decay=True):
     # print 'gradient tree backup ...'
-    print alpha
+    print(alpha)
     nS = env.nS
     nA = env.nA
 
@@ -333,7 +333,7 @@ def extragradient_tree_backup(env, value_function, target_policy, behaviour_poli
         errors.append(error)
 
         if episode % 500 == 0:
-            print "episode %d, error %f" % (episode, error)
+            print('episode %d, error %f' % (episode, error))
 
         # initialising eligibility traces
         e = np.zeros(shape=theta.shape)
