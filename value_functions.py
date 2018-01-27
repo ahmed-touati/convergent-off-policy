@@ -77,10 +77,10 @@ class RandWalkValueFunction():
         if type == 'tabular':
             self.param_shape = (2 * 5, )
             phis = np.array([[1, 0, 0, 0, 0],
-                                  [0, 1, 0, 0, 0],
-                                  [0, 0, 1, 0, 0],
-                                  [0, 0, 0, 1, 0],
-                                  [0, 0, 0, 0, 1]])
+                             [0, 1, 0, 0, 0],
+                             [0, 0, 1, 0, 0],
+                             [0, 0, 0, 1, 0],
+                             [0, 0, 0, 0, 1]])
 
         elif type == 'inverted':
             self.param_shape = (2 * 5, )
@@ -88,10 +88,10 @@ class RandWalkValueFunction():
         elif type == 'dependant':
             self.param_shape = (2 * 3, )
             phis = np.array([[1, 0, 0],
-                                  [1./np.sqrt(2), 1./np.sqrt(2), 0],
-                                  [1./np.sqrt(3), 1./np.sqrt(3), 1./np.sqrt(3)],
-                                  [0, 1./np.sqrt(2), 1./np.sqrt(2)],
-                                  [0, 0, 1]])
+                             [1./np.sqrt(2), 1./np.sqrt(2), 0],
+                             [1./np.sqrt(3), 1./np.sqrt(3), 1./np.sqrt(3)],
+                             [0, 1./np.sqrt(2), 1./np.sqrt(2)],
+                             [0, 0, 1]])
         else:
             raise ValueError('type should take value in {tabular, inverted, dependant}')
 

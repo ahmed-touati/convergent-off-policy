@@ -394,3 +394,61 @@ def extragradient_tree_backup(env, value_function, target_policy, behaviour_poli
 
     env.close()
     return errors
+
+
+def batch_off_policy(value_function, target_policy, data, lambda_param, discount_factor, type, num_episodes,
+                     obj_function, alpha):
+    nS = value_function.nS
+    nA = value_function.nA
+
+    theta = np.zeros(value_function.param_shape)
+    omega = np.zeros(theta.shape)
+    errors = []
+
+    for episode in data:
+        error = obj_function(theta)
+        errors.append(error)
+
+        if episode % 10 == 0:
+            print('episode %d, error %f' % (episode, error))
+        # initialising eligibility traces
+        e = np.zeros(shape=theta.shape)
+        for idx, (state, action, next_state, reward, behavior_prob, target_prob) in enumerate(
+                zip(episode['state'][:-1],
+                    episode['action'][:-1],
+                    episode['state'][1:],
+                    episode['reward'][:-1],
+                    episode['behavior_prob'][:-1],
+                    episode['target_prob'][:-1])):
+            old_omega = omega.copy()
+            old_theta = theta.copy()
+
+            phi = value_function.feature(state, action)
+            q = np.dot(old_theta, phi)
+
+            if type == 'TB':
+                kappa = target_prob
+            elif type == 'Retrace':
+                kappa = min([1, target_prob / behavior_prob])
+
+            e *= discount_factor * lambda_param * kappa
+            e += phi
+
+            if idx == len(episode['state']) - 1:
+                expected_phiprime = 0
+            else:
+                expected_phiprime = np.sum(
+                    [target_policy[next_state, a] * value_function.feature(next_state, a)
+                     for a in np.arange(nA)], axis=0)
+
+            V = np.dot(old_theta, expected_phiprime)
+            td_target = reward + discount_factor * V
+            delta = td_target - q
+
+            omega = old_omega + alpha * (delta * e - np.dot(old_omega, phi) * phi)
+
+            theta = old_theta - alpha * np.dot(old_omega, e) * \
+                                (discount_factor * expected_phiprime - phi)
+        if episode > num_episodes:
+            break
+    return errors
