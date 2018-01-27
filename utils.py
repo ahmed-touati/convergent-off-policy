@@ -2,6 +2,8 @@ import numpy as np
 import argparse
 from lib.envs.cliff_walking import CliffWalkingEnv
 from lib.envs.baird import Baird
+from tqdm import tqdm
+import os
 
 
 def make_argument_parser():
@@ -32,6 +34,95 @@ def get_random_policy(nS, nA):
     A = np.random.rand(nS, nA)
     P = A / np.sum(A, axis=1).reshape(-1, 1)
     return P
+
+
+def collect_dataset(env, target_policy, behaviour_policy, logdir, ntrials=10, nepisodes=5000):
+    if not os.path.exists(logdir):
+        os.mkdir(logdir)
+    for k in tqdm(range(ntrials)):
+        dataset = []
+        for i in range(nepisodes):
+            states = []
+            actions = []
+            rewards = []
+            behavior_probs = []
+            target_probs = []
+            state = env.reset()
+            while True:
+                action = np.random.choice(np.arange(env.nA), p=behaviour_policy[state])
+                behavior_prob = behaviour_policy[state, action]
+                target_prob = target_policy[state, action]
+
+                next_state, reward, done, _ = env.step(action)
+
+                states.append(state)
+                actions.append(action)
+                rewards.append(reward)
+                behavior_probs.append(behavior_prob)
+                target_probs.append(target_prob)
+                if done is True:
+                    break
+            episode = {
+                'states': states,
+                'actions': actions,
+                'rewards': rewards,
+                'behavior_probs': behavior_probs,
+                'target_probs': target_probs
+            }
+            dataset.append(episode)
+        np.save(os.path.join(logdir, 'dataset_%i.npy' % k), dataset)
+        np.save(os.path.join(logdir, 'target_policy.npy'), target_policy)
+
+
+def estimate_key_quantities(value_function, target_policy, data, lambda_param, discount_factor, type):
+    nA = value_function.nA
+    nS = value_function.nS
+    dim = nA * nS
+    A = np.zeros([dim, dim])
+    b = np.zeros(dim)
+    M = np.zeros([dim, dim])
+    nsteps = 0.0
+
+    for episode in data:
+        e = np.zeros(dim)
+        for idx, (state, action, next_state, reward, behavior_prob, target_prob) in enumerate(
+                zip(episode['state'][:-1],
+                    episode['action'][:-1],
+                    episode['state'][1:],
+                    episode['reward'][:-1],
+                    episode['behavior_prob'][:-1],
+                    episode['target_prob'][:-1])):
+            nsteps += 1
+
+            phi = value_function.feature(state, action)
+            if type == 'TB':
+                kappa = target_prob
+            elif type == 'Retrace':
+                kappa = min([1, target_prob / behavior_prob])
+
+            e *= discount_factor * lambda_param * kappa
+            e += phi
+
+            if idx == len(episode['state']) - 1:
+                expected_phiprime = 0
+            else:
+                expected_phiprime = np.sum(
+                    [target_policy[next_state, a] * value_function.feature(next_state, a)
+                     for a in np.arange(nA)], axis=0)
+
+            A += np.outer(e, discount_factor * expected_phiprime - phi)
+            b += reward * e
+            M += np.outer(phi, phi)
+    A /= nsteps
+    b /= nsteps
+    M /= nsteps
+    return A, b, np.linalg.pinv(M)
+
+
+def compute_EM_MSBPE(weights, A, b, M):
+    r = np.dot(A, weights) + b
+    error = np.dot(r, np.dot(M, r))
+    return error
 
 
 def estimate_stationary_distribution(env, behaviour_policy):
@@ -193,5 +284,4 @@ def policy_evaluation(env, policy, discount_factor=0.6, threshold=0.00001):
                 q += prob * (reward + discount_factor * V[next_state])
             Q[s, a] = q
     return Q, V
-
 
