@@ -36,7 +36,8 @@ def get_random_policy(nS, nA):
     return P
 
 
-def collect_dataset(env, target_policy, behaviour_policy, logdir, ntrials=10, nepisodes=5000):
+def collect_dataset(env, target_policy, behavior_policy, logdir, ntrials=5, nepisodes=5000):
+    np.save(os.path.join(logdir, 'target_policy.npy'), target_policy)
     if not os.path.exists(logdir):
         os.mkdir(logdir)
     for k in tqdm(range(ntrials)):
@@ -49,8 +50,8 @@ def collect_dataset(env, target_policy, behaviour_policy, logdir, ntrials=10, ne
             target_probs = []
             state = env.reset()
             while True:
-                action = np.random.choice(np.arange(env.nA), p=behaviour_policy[state])
-                behavior_prob = behaviour_policy[state, action]
+                action = np.random.choice(np.arange(env.nA), p=behavior_policy[state])
+                behavior_prob = behavior_policy[state, action]
                 target_prob = target_policy[state, action]
 
                 next_state, reward, done, _ = env.step(action)
@@ -61,7 +62,9 @@ def collect_dataset(env, target_policy, behaviour_policy, logdir, ntrials=10, ne
                 behavior_probs.append(behavior_prob)
                 target_probs.append(target_prob)
                 if done is True:
+                    states.append(next_state)
                     break
+                state = next_state
             episode = {
                 'states': states,
                 'actions': actions,
@@ -71,13 +74,12 @@ def collect_dataset(env, target_policy, behaviour_policy, logdir, ntrials=10, ne
             }
             dataset.append(episode)
         np.save(os.path.join(logdir, 'dataset_%i.npy' % k), dataset)
-        np.save(os.path.join(logdir, 'target_policy.npy'), target_policy)
 
 
 def estimate_key_quantities(value_function, target_policy, data, lambda_param, discount_factor, type):
     nA = value_function.nA
     nS = value_function.nS
-    dim = nA * nS
+    dim = value_function.param_shape[0]
     A = np.zeros([dim, dim])
     b = np.zeros(dim)
     M = np.zeros([dim, dim])
@@ -86,12 +88,12 @@ def estimate_key_quantities(value_function, target_policy, data, lambda_param, d
     for episode in data:
         e = np.zeros(dim)
         for idx, (state, action, next_state, reward, behavior_prob, target_prob) in enumerate(
-                zip(episode['state'][:-1],
-                    episode['action'][:-1],
-                    episode['state'][1:],
-                    episode['reward'][:-1],
-                    episode['behavior_prob'][:-1],
-                    episode['target_prob'][:-1])):
+                zip(episode['states'][:-1],
+                    episode['actions'],
+                    episode['states'][1:],
+                    episode['rewards'],
+                    episode['behavior_probs'],
+                    episode['target_probs'])):
             nsteps += 1
 
             phi = value_function.feature(state, action)
@@ -103,7 +105,7 @@ def estimate_key_quantities(value_function, target_policy, data, lambda_param, d
             e *= discount_factor * lambda_param * kappa
             e += phi
 
-            if idx == len(episode['state']) - 1:
+            if idx == len(episode['states']) - 1:
                 expected_phiprime = 0
             else:
                 expected_phiprime = np.sum(
