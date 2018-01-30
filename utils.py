@@ -38,6 +38,7 @@ def get_random_policy(nS, nA):
 
 def collect_dataset(env, target_policy, behavior_policy, logdir, ntrials=5, nepisodes=5000):
     np.save(os.path.join(logdir, 'target_policy.npy'), target_policy)
+    np.save(os.path.join(logdir, 'behavior_policy.npy'), behavior_policy)
     if not os.path.exists(logdir):
         os.mkdir(logdir)
     for k in tqdm(range(ntrials)):
@@ -118,12 +119,18 @@ def estimate_key_quantities(value_function, target_policy, data, lambda_param, d
     A /= nsteps
     b /= nsteps
     M /= nsteps
-    return A, b, np.linalg.pinv(M)
+    M_inv = np.linalg.pinv(M)
+    M_eigenvals = np.sort(np.linalg.eigvals(M))
+    M_eigenval_min = M_eigenvals[0]
+    M_eigenval_max = M_eigenvals[-1]
+    S = np.dot(np.transpose(A), np.dot(M_inv, A))
+    sigma = np.sort(np.linalg.eigvals(S))[-1]
+    return A, b, M_inv, M_eigenval_min, M_eigenval_max, sigma
 
 
-def compute_EM_MSBPE(weights, A, b, M):
+def compute_EM_MSBPE(weights, A, b, M_inv):
     r = np.dot(A, weights) + b
-    error = np.dot(r, np.dot(M, r))
+    error = np.dot(r, np.dot(M_inv, r))
     return error
 
 
