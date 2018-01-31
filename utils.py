@@ -50,7 +50,9 @@ def collect_dataset(env, target_policy, behavior_policy, logdir, ntrials=5, nepi
             behavior_probs = []
             target_probs = []
             state = env.reset()
-            while True:
+            nsteps = 0
+            while True and nsteps < 200:
+                nsteps += 1
                 action = np.random.choice(np.arange(env.nA), p=behavior_policy[state])
                 behavior_prob = behavior_policy[state, action]
                 target_prob = target_policy[state, action]
@@ -139,7 +141,9 @@ def estimate_stationary_distribution(env, behaviour_policy):
 
     for episode in range(10000):
         state = env.reset()
-        while True:
+        nsteps = 0
+        while True and (nsteps < 200):
+            nsteps += 1
             action_probs = behaviour_policy[state]
             action = np.random.choice(np.arange(env.nA), p=action_probs)
             cnt[state, action] += 1
@@ -244,7 +248,7 @@ class OffPolicyOperator():
         return rmspbe
 
 
-def policy_evaluation(env, policy, discount_factor=0.6, threshold=0.00001):
+def policy_evaluation(env, policy, discount_factor, threshold=0.00001):
     """
     Evaluate a policy given an environment and a full description of the environment's dynamics.
 
@@ -293,4 +297,15 @@ def policy_evaluation(env, policy, discount_factor=0.6, threshold=0.00001):
                 q += prob * (reward + discount_factor * V[next_state])
             Q[s, a] = q
     return Q, V
+
+
+def compute_MSE(theta, value_function, true_q, mu):
+    nS = value_function.nS
+    nA = value_function.nA
+    q = np.zeros([nS, nA])
+    for s in range(nS):
+        for a in range(nA):
+            q[s, a] = np.dot(theta, value_function.feature(s, a))
+    error = np.sum(mu.reshape((nS, nA)) * np.power(true_q - q, 2))
+    return error
 
