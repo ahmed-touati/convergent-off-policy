@@ -178,7 +178,7 @@ def AB_Trace(value_function, target_policy, behavior_policy, data, lambda_param,
             omega = old_omega + alpha_omega * (delta * e - np.dot(old_omega, phi) * phi)
 
             theta = old_theta + alpha_theta * (delta * e - discount_factor * np.dot(old_omega, e) *
-                                            (expected_phiprime - weighted_phiprime))
+                                            (expected_phiprime - lambda_param * weighted_phiprime))
         if i > num_episodes:
             break
     return errors
