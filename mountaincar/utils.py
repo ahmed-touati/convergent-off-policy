@@ -2,6 +2,7 @@ from tqdm import tqdm
 import numpy as np
 from mountain_car import ACTIONS, behavior_policy, takeAction, POSITION_MAX, target_policy, DISCOUNT_FACTOR
 import os
+import json
 
 
 def collect_dataset(logdir, ntrials=5, maxsteps=100000):
@@ -30,7 +31,7 @@ def collect_dataset(logdir, ntrials=5, maxsteps=100000):
                 actions.append(currentAction)
                 rewards.append(reward)
                 # track new state and action
-                all_positions.append(currentAction)
+                all_positions.append(currentPosition)
                 all_velocities.append(currentVelocity)
                 all_actions.append(currentAction)
 
@@ -42,7 +43,7 @@ def collect_dataset(logdir, ntrials=5, maxsteps=100000):
 
             episode = {
                 'positions': positions,
-                'velocites': velocities,
+                'velocities': velocities,
                 'actions': actions,
                 'rewards': rewards,
             }
@@ -60,13 +61,14 @@ def collect_dataset(logdir, ntrials=5, maxsteps=100000):
 
     test_points = {
         'positions': test_positions,
-        'velocites': test_velocities,
+        'velocities': test_velocities,
         'actions': test_actions
     }
-    np.save(os.path.join(logdir, 'test_points.npy'), test_points)
+    with open(os.path.join(logdir, 'test_points.json'), 'w') as f:
+        json.dump(test_points, f)
 
 
-def estimate_true_q(test_points, logdir, nepisodes=100):
+def estimate_true_q(test_points, logdir, nepisodes=1000):
     true_q = np.zeros(len(test_points['positions']))
     for idx, (position, velocity, action) in tqdm(enumerate(
             zip(test_points['positions'], test_points['velocities'], test_points['actions']))):

@@ -56,10 +56,6 @@ class ValueFunction:
 
         self.hashTable = IHT(maxSize)
 
-        # weight for each tile
-        self.weights = np.zeros(maxSize)
-        self.omegas = np.zeros(maxSize)
-
         # position and velocity needs scaling to satisfy the tile software
         self.positionScale = self.numOfTilings / (POSITION_MAX - POSITION_MIN)
         self.velocityScale = self.numOfTilings / (VELOCITY_MAX - VELOCITY_MIN)
@@ -74,11 +70,11 @@ class ValueFunction:
         return activeTiles
 
     # estimate the value of given state and action
-    def value(self, position, velocity, action):
+    def value(self, theta, position, velocity, action):
         if position == POSITION_MAX:
             return 0.0
         activeTiles = self.getActiveTiles(position, velocity, action)
-        return np.sum(self.weights[activeTiles])
+        return np.sum(theta[activeTiles])
 
     # learn with given state, action and target
     # def learn(self, position, velocity, action, target):
@@ -95,12 +91,12 @@ class ValueFunction:
             phi[activeTiles] = 1
         return phi
 
-    def compute_approx_error(self, test_points, testQ):
+    def compute_MSE(self, theta, test_points, true_q):
         error = 0.0
-        for position, velocity, action, q in zip(test_points['positions'], test_points['velocites'],
-                                                 test_points['actions'], testQ):
-            error += (self.value(position, velocity, action) - q)**2
-        error = error/np.sum(testQ**2)
+        for position, velocity, action, q in zip(test_points['positions'], test_points['velocities'],
+                                                 test_points['actions'], true_q):
+            error += (self.value(theta, position, velocity, action) - q)**2
+        error = error/np.sum(true_q**2)
         return error
 
 
