@@ -4,6 +4,7 @@ from TileCoding import *
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from tqdm import tqdm
+import os
 
 # all possible actions
 ACTION_REVERSE = -1
@@ -23,6 +24,8 @@ EPSILON = 0
 import pdb
 # take an @action at @position and @velocity
 # @return: new position, new velocity, reward (always -1)
+
+DISCOUNT_FACTOR = 0.999
 
 
 def takeAction(position, velocity, action):
@@ -146,3 +149,5 @@ def get_target_prob(position, velocity, action):
         return [0.1, 0.1, 0.8][action+1]
     else:
         return [0.8, 0.1, 0.1][action+1]
+
+
