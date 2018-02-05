@@ -79,7 +79,7 @@ def collect_dataset(env, target_policy, behavior_policy, logdir, ntrials=5, nepi
         np.save(os.path.join(logdir, 'dataset_%i.npy' % k), dataset)
 
 
-def estimate_key_quantities(value_function, target_policy, data, lambda_param, discount_factor, type):
+def estimate_key_quantities(value_function, target_policy, data, lambda_param, discount_factor, return_type):
     nA = value_function.nA
     nS = value_function.nS
     dim = value_function.param_shape[0]
@@ -100,9 +100,9 @@ def estimate_key_quantities(value_function, target_policy, data, lambda_param, d
             nsteps += 1
 
             phi = value_function.feature(state, action)
-            if type == 'TB':
+            if return_type == 'TB':
                 kappa = target_prob
-            elif type == 'Retrace':
+            elif return_type  == 'Retrace':
                 kappa = min([1, target_prob / behavior_prob])
 
             e *= discount_factor * lambda_param * kappa
@@ -307,5 +307,6 @@ def compute_MSE(theta, value_function, true_q, mu):
         for a in range(nA):
             q[s, a] = np.dot(theta, value_function.feature(s, a))
     error = np.sum(mu.reshape((nS, nA)) * np.power(true_q - q, 2))
+    error /= np.sum(mu.reshape((nS, nA)) * true_q**2)
     return error
 

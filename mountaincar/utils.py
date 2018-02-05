@@ -1,18 +1,19 @@
 from tqdm import tqdm
 import numpy as np
-from mountain_car import ACTIONS, behavior_policy, takeAction, POSITION_MAX, target_policy, DISCOUNT_FACTOR
+from mountain_car import ACTIONS, behavior_policy, takeAction, POSITION_MAX, target_policy, DISCOUNT_FACTOR,\
+    get_target_prob, get_behavior_prob
 import os
 import json
 
 
-def collect_dataset(logdir, ntrials=5, maxsteps=100000):
+def collect_dataset(logdir, ntrials=5, nepisodes=5000):
     all_positions = []
     all_velocities = []
     all_actions = []
     for k in tqdm(range(ntrials)):
         dataset = []
         nsteps = 0
-        while nsteps < maxsteps:
+        for _ in range(nepisodes):
             positions = []
             velocities = []
             actions = []
@@ -35,7 +36,7 @@ def collect_dataset(logdir, ntrials=5, maxsteps=100000):
                 all_velocities.append(currentVelocity)
                 all_actions.append(currentAction)
 
-                if (newPosition == POSITION_MAX) or (nsteps >= maxsteps):
+                if newPosition == POSITION_MAX:
                     break
 
                 currentPosition = newPosition
@@ -89,3 +90,57 @@ def estimate_true_q(test_points, logdir, nepisodes=1000):
                 currentAction = np.random.choice(ACTIONS, p=target_policy(currentPosition, currentVelocity))
         true_q[idx] = cumreward / nepisodes
     np.save(os.path.join(logdir, 'true_q.npy'), true_q)
+
+
+def estimate_key_quantities(value_function, data, lambda_param, return_type):
+    dim = value_function.maxSize
+    A = np.zeros([dim, dim])
+    b = np.zeros(dim)
+    M = np.zeros([dim, dim])
+    nsteps = 0.0
+    nepisodes = 0
+    for episode in tqdm(data):
+        e = np.zeros(dim)
+        nepisodes += 1
+        for idx, (position, velocity, action, newPosition, newVelocity, reward) in enumerate(
+                zip(episode['positions'][:-1],
+                    episode['velocities'][:-1],
+                    episode['actions'][:-1],
+                    episode['positions'][1:],
+                    episode['velocities'][1:],
+                    episode['rewards'],
+                    )):
+            nsteps += 1
+
+            phi = value_function.feature(position, velocity, action)
+            if return_type == 'TB':
+                kappa = get_target_prob(position, velocity, action)
+            elif return_type == 'Retrace':
+                kappa = min([1, get_target_prob(position, velocity, action) / get_behavior_prob(position, velocity, action)])
+
+            e *= DISCOUNT_FACTOR * lambda_param * kappa
+            e += phi
+
+            if newPosition == POSITION_MAX:
+                expected_phiprime = 0
+            else:
+                expected_phiprime = np.sum(
+                    [get_target_prob(newPosition, newVelocity, a) * value_function.feature(newPosition, newVelocity, a)
+                     for a in ACTIONS], axis=0)
+
+            A += np.outer(e, DISCOUNT_FACTOR * expected_phiprime - phi)
+            b += reward * e
+            M += np.outer(phi, phi)
+        if nepisodes > 1000:
+            break
+    A /= nsteps
+    b /= nsteps
+    M /= nsteps
+    M_inv = np.linalg.pinv(M)
+    return A, b, M_inv
+
+
+def compute_EM_MSBPE(weights, A, b, M_inv):
+    r = np.dot(A, weights) + b
+    error = np.dot(r, np.dot(M_inv, r))
+    return error

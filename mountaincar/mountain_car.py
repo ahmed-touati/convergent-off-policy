@@ -47,7 +47,7 @@ class ValueFunction:
     # View the following webpage for more information
     # http://incompleteideas.net/sutton/tiles/tiles3.html
     # @maxSize: the maximum # of indices
-    def __init__(self, numOfTilings=2, maxSize=512):
+    def __init__(self, numOfTilings=10, maxSize=96):
         self.maxSize = maxSize
         self.numOfTilings = numOfTilings
 
