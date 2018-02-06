@@ -73,12 +73,12 @@ def estimate_true_q(test_points, logdir, nepisodes=1000):
     true_q = np.zeros(len(test_points['positions']))
     for idx, (position, velocity, action) in tqdm(enumerate(
             zip(test_points['positions'], test_points['velocities'], test_points['actions']))):
-        currentPosition = position
-        currentVelocity = velocity
-        currentAction = action
         cumreward = 0.0
         for _ in range(nepisodes):
             nsteps = 0
+            currentPosition = position
+            currentVelocity = velocity
+            currentAction = action
             while True:
                 newPosition, newVelocity, reward = takeAction(currentPosition, currentVelocity, currentAction)
                 cumreward += np.power(DISCOUNT_FACTOR, nsteps) * reward
@@ -131,8 +131,8 @@ def estimate_key_quantities(value_function, data, lambda_param, return_type):
             A += np.outer(e, DISCOUNT_FACTOR * expected_phiprime - phi)
             b += reward * e
             M += np.outer(phi, phi)
-        if nepisodes > 1000:
-            break
+        # if nepisodes > 1000:
+        #     break
     A /= nsteps
     b /= nsteps
     M /= nsteps
