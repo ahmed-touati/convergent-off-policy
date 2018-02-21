@@ -62,7 +62,7 @@ def gradient_off_policy(value_function, data, lambda_param, return_type, MSE_fun
                         alpha_omega_0, alpha_theta_0, nepisodes, logdir, storedir):
 
     logfile = os.path.join(logdir, '{}-{}-{}-{}-{}'.format('gradient', return_type, lambda_param, alpha_omega_0, alpha_theta_0))
-    storefile = os.path.join(storedir, '{}-{}-{}-{}-{}'.format('AB', return_type, lambda_param, alpha_omega_0, alpha_theta_0))
+    storefile = os.path.join(storedir, '{}-{}-{}-{}-{}'.format('gradient', return_type, lambda_param, alpha_omega_0, alpha_theta_0))
     # Log
     log = SummaryWriter(logfile)
     print('Writing logs to {}'.format(logfile))
