@@ -5,15 +5,17 @@ import numpy as np
 import os
 import json
 
-return_type = 'Retrace'
+return_type = 'TB'
 nepisodes = 2000
 lambda_range = [0.0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1.0]
-alpha_range = [0.001, 0.005, 0.01]
-alpha_range = [0.001, 0.005, 0.01]
+# lambda_range = [0.5, 0.625, 0.75, 0.875, 1.0]
+# alpha_range = [0.005, 0.01, 0.05]
+# alpha_range = [0.001, 0.005, 0.01]
+alpha_range = [0.01, 0.05, 0.1]
 
 datadir = 'data'
-logdir = 'logs'
-storedir = 'results'
+logdir = 'logsGQ'
+storedir = 'resultsGQ'
 if not os.path.exists(logdir):
     os.mkdir(logdir)
 if not os.path.exists(storedir):
@@ -39,9 +41,9 @@ for lambda_param in lambda_range:
         print('estimating key quantities ...')
         A, b, M_inv = estimate_key_quantities(value_function, data, lambda_param, return_type)
         print('saving key quantities ...')
-        np.save(os.path.join(datadir, 'A-{}.npy'.format(lambda_param)), A)
-        np.save(os.path.join(datadir, 'b-{}.npy'.format(lambda_param)), b)
-        np.save(os.path.join(datadir, 'M-inv-{}.npy'.format(lambda_param)), M_inv)
+        np.save(os.path.join(datadir, 'A-{}-{}.npy'.format(return_type, lambda_param)), A)
+        np.save(os.path.join(datadir, 'b-{}-{}.npy'.format(return_type, lambda_param)), b)
+        np.save(os.path.join(datadir, 'M-inv-{}-{}.npy'.format(return_type, lambda_param)), M_inv)
     else:
         A = np.load(os.path.join(datadir, 'A-{}.npy'.format(lambda_param)))
         b = np.load(os.path.join(datadir, 'b-{}.npy'.format(lambda_param)))
@@ -53,13 +55,14 @@ for lambda_param in lambda_range:
         for alpha_theta in alpha_range:
             GQ_errors = GQ(value_function, data, lambda_param, MSE_function, alpha_omega, alpha_theta,
                            nepisodes, logdir, storedir)
-            AB_MSE_errors, AB_MSBPE_errors = AB_Trace(value_function, data, lambda_param, return_type,
-                                                      MSE_function, MSBPE_function, alpha_omega, alpha_theta,
-                                                      nepisodes, logdir, storedir)
-            gradient_MSE_errors, gradient_MSBPE_errors = gradient_off_policy(value_function, data, lambda_param,
-                                                                             return_type, MSE_function, MSBPE_function,
-                                                                             alpha_omega, alpha_theta, nepisodes,
-                                                                             logdir, storedir)
+
+            # AB_MSE_errors, AB_MSBPE_errors = AB_Trace(value_function, data, lambda_param, return_type,
+            #                                           MSE_function, MSBPE_function, alpha_omega, alpha_theta,
+            #                                           nepisodes, logdir, storedir)
+            # gradient_MSE_errors, gradient_MSBPE_errors = gradient_off_policy(value_function, data, lambda_param,
+            #                                                                  return_type, MSE_function, MSBPE_function,
+            #                                                                  alpha_omega, alpha_theta, nepisodes,
+            #                                                                  logdir, storedir)
 
 
 

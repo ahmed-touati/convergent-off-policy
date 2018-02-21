@@ -92,16 +92,16 @@ def estimate_true_q(test_points, logdir, nepisodes=1000):
     np.save(os.path.join(logdir, 'true_q.npy'), true_q)
 
 
-def estimate_key_quantities(value_function, data, lambda_param, return_type):
+def estimate_key_quantities(value_function, data, lambda_param, return_type, nepisodes=None):
     dim = value_function.maxSize
     A = np.zeros([dim, dim])
     b = np.zeros(dim)
     M = np.zeros([dim, dim])
     nsteps = 0.0
-    nepisodes = 0
+    if nepisodes:
+        data = data[:nepisodes]
     for episode in tqdm(data):
         e = np.zeros(dim)
-        nepisodes += 1
         for idx, (position, velocity, action, newPosition, newVelocity, reward) in enumerate(
                 zip(episode['positions'][:-1],
                     episode['velocities'][:-1],
@@ -131,8 +131,6 @@ def estimate_key_quantities(value_function, data, lambda_param, return_type):
             A += np.outer(e, DISCOUNT_FACTOR * expected_phiprime - phi)
             b += reward * e
             M += np.outer(phi, phi)
-        # if nepisodes > 1000:
-        #     break
     A /= nsteps
     b /= nsteps
     M /= nsteps
